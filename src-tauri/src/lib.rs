@@ -117,6 +117,74 @@ pub fn run() {
                 let _ = rx;
             }
 
+            // Auto-update: poll latest.json on startup, download + install if
+            // a newer version is available. Logs failures to console but never
+            // panics — a failed update check should never block the app.
+            #[cfg(not(test))]
+            {
+                use tauri_plugin_updater::UpdaterExt;
+                let app_handle = app.handle().clone();
+                let bus_for_update = bus.clone();
+                tauri::async_runtime::spawn(async move {
+                    bus_for_update.publish(crate::events::Event::console(
+                        "SYSTEM",
+                        "업데이트 확인 중...",
+                        None,
+                    ));
+                    let updater = match app_handle.updater() {
+                        Ok(u) => u,
+                        Err(e) => {
+                            bus_for_update.publish(crate::events::Event::console(
+                                "WARN",
+                                format!("updater 초기화 실패: {e:?}"),
+                                None,
+                            ));
+                            return;
+                        }
+                    };
+                    match updater.check().await {
+                        Ok(Some(update)) => {
+                            let v = update.version.clone();
+                            bus_for_update.publish(crate::events::Event::console(
+                                "SYSTEM",
+                                format!("새 버전 발견: v{v} — 다운로드 중..."),
+                                None,
+                            ));
+                            if let Err(e) = update
+                                .download_and_install(|_, _| {}, || {})
+                                .await
+                            {
+                                bus_for_update.publish(crate::events::Event::console(
+                                    "ERROR",
+                                    format!("업데이트 실패: {e:?}"),
+                                    None,
+                                ));
+                            } else {
+                                bus_for_update.publish(crate::events::Event::console(
+                                    "SYSTEM",
+                                    format!("v{v} 설치 완료 — 다음 재시작부터 적용"),
+                                    None,
+                                ));
+                            }
+                        }
+                        Ok(None) => {
+                            bus_for_update.publish(crate::events::Event::console(
+                                "SYSTEM",
+                                "최신 버전입니다.",
+                                None,
+                            ));
+                        }
+                        Err(e) => {
+                            bus_for_update.publish(crate::events::Event::console(
+                                "WARN",
+                                format!("업데이트 확인 실패: {e:?}"),
+                                None,
+                            ));
+                        }
+                    }
+                });
+            }
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
