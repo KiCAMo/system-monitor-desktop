@@ -205,13 +205,17 @@ pub async fn reload(inner: &mut Inner, new_cfg: AppConfig) -> Result<()> {
 
 /// Spawn the broadcast→Tauri-event relay. Lives across reloads (the bus is
 /// shared). Call once from `setup()` after `app.manage(state)`.
+///
+/// Uses `tauri::async_runtime::spawn` rather than `tokio::spawn` because
+/// `setup()` runs on the main thread outside any tokio runtime context;
+/// `tokio::spawn` would panic with "there is no reactor running".
 #[cfg(not(test))]
 pub fn spawn_event_relay(
     app_handle: tauri::AppHandle,
     mut rx: broadcast::Receiver<Event>,
-) -> JoinHandle<()> {
+) {
     use tauri::Emitter;
-    tokio::spawn(async move {
+    tauri::async_runtime::spawn(async move {
         loop {
             match rx.recv().await {
                 Ok(ev) => {
@@ -231,20 +235,18 @@ pub fn spawn_event_relay(
                 Err(broadcast::error::RecvError::Closed) => break,
             }
         }
-    })
+    });
 }
 
 /// Stub for `cargo test --lib` (no `tauri::AppHandle` available in unit tests).
-/// In the test build this just drains the receiver until it closes — useful as
-/// a sanity sink when an integration test wants the bus alive.
 #[cfg(test)]
 pub fn spawn_event_relay(
     _app_handle: (),
     mut rx: broadcast::Receiver<Event>,
-) -> JoinHandle<()> {
+) {
     tokio::spawn(async move {
         while rx.recv().await.is_ok() {}
-    })
+    });
 }
 
 #[cfg(test)]

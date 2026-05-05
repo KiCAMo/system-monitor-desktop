@@ -13,19 +13,35 @@ pub mod state;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use tauri::Manager;
+use tauri::{Manager, path::BaseDirectory};
 
 use crate::config::{save_config, AppConfig};
 use crate::events::EventBus;
 use crate::history::HistoryStore;
 use crate::state::AppState;
 
-fn cfg_path_from_env() -> PathBuf {
-    PathBuf::from(std::env::var("DDODOLI_CONFIG").unwrap_or_else(|_| "config.yaml".into()))
+/// Resolve the per-user data directory the app writes config / history /
+/// profiles into. macOS = `~/Library/Application Support/<bundle id>/`.
+/// Falls back to cwd when running under tests / unbundled binary.
+fn resolve_data_dir(app: &tauri::App) -> PathBuf {
+    if let Ok(p) = app.path().resolve("", BaseDirectory::AppData) {
+        return p;
+    }
+    PathBuf::from(".")
 }
 
-fn history_db_path() -> String {
-    std::env::var("DDODOLI_HISTORY_DB").unwrap_or_else(|_| "history.db".into())
+fn cfg_path_for(data_dir: &PathBuf) -> PathBuf {
+    if let Ok(p) = std::env::var("DDODOLI_CONFIG") {
+        return PathBuf::from(p);
+    }
+    data_dir.join("config.yaml")
+}
+
+fn history_db_path_for(data_dir: &PathBuf) -> String {
+    if let Ok(p) = std::env::var("DDODOLI_HISTORY_DB") {
+        return p;
+    }
+    data_dir.join("history.db").to_string_lossy().into_owned()
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -43,7 +59,20 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
-            let cfg_path = cfg_path_from_env();
+            // Resolve per-user data directory + ensure it exists. Without this
+            // the app would try to write config.yaml/history.db to its cwd
+            // (often /Applications/... read-only) and abort on first launch.
+            let data_dir = resolve_data_dir(app);
+            std::fs::create_dir_all(&data_dir).ok();
+
+            // Profiles also live under data_dir; tell the profiles command
+            // module where to look via env so we don't need a global.
+            std::env::set_var(
+                "DDODOLI_PROFILES_DIR",
+                data_dir.join("profiles").to_string_lossy().to_string(),
+            );
+
+            let cfg_path = cfg_path_for(&data_dir);
             // First-run bootstrap: write a default AppConfig so load_config
             // doesn't fail. The user fills in nodes/keys via the settings UI.
             if !cfg_path.exists() {
@@ -60,7 +89,7 @@ pub fn run() {
             // they survive every reload.
             let bus = EventBus::new();
             let history = Arc::new(
-                HistoryStore::new(history_db_path())
+                HistoryStore::new(history_db_path_for(&data_dir))
                     .map_err(|e| format!("open history db: {e:?}"))?,
             );
 
