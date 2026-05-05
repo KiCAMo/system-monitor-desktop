@@ -1,6 +1,9 @@
 // Initial scaffold: minimal Tauri app that wires plugins. Subsequent commits
 // add the IPC commands, the SSH/PTY backend, and the frontend.
 
+pub mod config;
+pub mod events;
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tracing_subscriber::fmt()
