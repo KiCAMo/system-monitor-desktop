@@ -4976,7 +4976,9 @@ name = "system-monitor-desktop"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "chrono",
+ "futures",
  "once_cell",
  "portable-pty",
  "regex",

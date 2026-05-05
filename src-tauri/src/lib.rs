@@ -3,6 +3,10 @@
 
 pub mod config;
 pub mod events;
+pub mod history;
+pub mod metrics;
+pub mod pty_session;
+pub mod ssh_monitor;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
