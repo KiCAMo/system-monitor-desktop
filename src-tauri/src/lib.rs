@@ -54,6 +54,18 @@ pub fn run() {
         .init();
 
     tauri::Builder::default()
+        .on_window_event(|window, event| {
+            // X (close) on the main window quits the whole app — Windows/
+            // Linux convention. macOS users used to "close = hide" can use
+            // Cmd+H to hide instead. Secondary windows (settings/history)
+            // already preventDefault + hide via their own JS, so this only
+            // really affects main.
+            if window.label() == "main" {
+                if let tauri::WindowEvent::CloseRequested { .. } = event {
+                    window.app_handle().exit(0);
+                }
+            }
+        })
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_notification::init())
