@@ -13,7 +13,9 @@
     "withGlobalTauri": true,
     "windows": [
       {
+        "label": "main",
         "title": "System Monitor",
+        "url": "index.html",
         "width": 1280,
         "height": 800,
         "minWidth": 900,
@@ -21,7 +23,32 @@
         "resizable": true,
         "fullscreen": false,
         "decorations": true,
-        "transparent": false
+        "transparent": false,
+        "visible": true
+      },
+      {
+        "label": "settings",
+        "title": "설정",
+        "url": "settings.html",
+        "width": 720,
+        "height": 800,
+        "minWidth": 600,
+        "minHeight": 500,
+        "resizable": true,
+        "decorations": true,
+        "visible": false
+      },
+      {
+        "label": "history",
+        "title": "매칭 히스토리",
+        "url": "history.html",
+        "width": 880,
+        "height": 700,
+        "minWidth": 600,
+        "minHeight": 400,
+        "resizable": true,
+        "decorations": true,
+        "visible": false
       }
     ],
     "security": {

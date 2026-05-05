@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<title>매칭 히스토리</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body class="window-page">
+  <header class="topbar">
+    <div class="brand">매칭 히스토리</div>
+    <div class="meta"></div>
+  </header>
+
+  <div class="window-body history-page">
+    <div class="picker-bar history-bar">
+      <input id="historyQuery" placeholder="텍스트 검색 (matched line / block 내용)" />
+      <select id="historyNode"><option value="">(전체 노드)</option></select>
+      <button type="button" id="historyRefresh">새로고침</button>
+      <button type="button" id="historyClear" class="danger">전체 삭제</button>
+      <button type="button" id="historyHide">닫기</button>
+    </div>
+    <div id="historyList" class="picker-list history-list"></div>
+    <div id="historyDetail" class="history-detail hidden">
+      <div class="history-detail-head">
+        <span id="historyDetailMeta"></span>
+        <button type="button" id="historyInject" class="primary">에이전트에 재주입</button>
+        <button type="button" id="historyDel" class="danger">이 항목 삭제</button>
+        <button type="button" id="historyDetailClose">닫기</button>
+      </div>
+      <pre id="historyDetailBlock" class="history-block"></pre>
+    </div>
+  </div>
+
+  <script src="history.js"></script>
+</body>
+</html>

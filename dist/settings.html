@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<title>설정</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body class="window-page">
+  <header class="topbar">
+    <div class="brand">설정</div>
+    <div class="meta" id="settingsMsg"></div>
+  </header>
+
+  <form id="settingsForm" class="window-body">
+    <section class="grp">
+      <h3>프로필</h3>
+      <p class="hint">프로젝트별 설정을 저장해두고 빠르게 전환합니다. 현재 폼의 내용으로 새 프로필을 만들거나, 저장된 프로필을 불러와 즉시 핫리로드합니다.</p>
+      <div class="profile-row">
+        <select id="profileSelect"><option value="">(프로필 선택)</option></select>
+        <button type="button" id="profileLoad">불러오기</button>
+        <input id="profileNewName" placeholder="새 프로필 이름" />
+        <button type="button" id="profileSaveAs">현재 폼 → 프로필 저장</button>
+        <button type="button" id="profileDelete" class="danger">삭제</button>
+      </div>
+    </section>
+
+    <section class="grp">
+      <h3>EC2 (모든 노드 공통)</h3>
+      <label>사용자<input name="ec2.user" placeholder="ubuntu" /></label>
+      <label>SSH 포트<input name="ec2.ssh_port" type="number" /></label>
+      <label>배포 키 경로 (.pem)<span class="ifield"><input name="ec2.deploy_key" /><button type="button" class="pick" data-kind="file">📁</button></span></label>
+      <label>진단 전용 키 경로 (옵션, ForceCommand 잠금 권장)<span class="ifield"><input name="ec2.diag_key" /><button type="button" class="pick" data-kind="file">📁</button></span></label>
+      <label>known_hosts (옵션)<span class="ifield"><input name="ec2.known_hosts" /><button type="button" class="pick" data-kind="file">📁</button></span></label>
+      <label class="check"><input type="checkbox" name="ec2.sudo" /> docker 명령에 sudo 사용 (ubuntu 유저가 docker 그룹 미소속일 때)</label>
+    </section>
+
+    <section class="grp">
+      <h3>노드 (모니터링 대상)
+        <button type="button" id="addNodeBtn" class="addbtn">+ 노드 추가</button>
+      </h3>
+      <p class="hint">한 대만 등록해도 됩니다. 부하분산 환경이면 두 번째 노드를 추가하세요.</p>
+      <div id="nodesList"></div>
+    </section>
+
+    <section class="grp">
+      <h3>프로젝트</h3>
+      <label>로컬 소스 경로 (에이전트 cwd)<span class="ifield"><input name="project.local_path" /><button type="button" class="pick" data-kind="dir">📁</button></span></label>
+      <label>EC2 배포 경로 (원격, 직접 입력)<input name="project.ec2_path" /></label>
+      <label>한줄 설명<input name="project.description" /></label>
+    </section>
+
+    <section class="grp">
+      <h3>모니터링 / ERROR 감지</h3>
+      <label>ERROR 정규식 패턴 (한 줄에 하나)<textarea name="monitor.error_patterns" rows="4"></textarea></label>
+      <div class="row">
+        <label>직전 N줄<input name="monitor.before_lines" type="number" /></label>
+        <label>직후 N줄<input name="monitor.after_lines" type="number" /></label>
+        <label>지연(초)<input name="monitor.after_delay_seconds" type="number" /></label>
+      </div>
+      <label>스택 연속 라인 정규식<input name="monitor.stack_continuation" /></label>
+      <label>쿨다운(초)<input name="monitor.cooldown_seconds" type="number" /></label>
+      <label>한 paste 최대 글자수<input name="monitor.max_block_chars" type="number" /></label>
+      <label>재연결 시 catch-up 줄수 (docker logs --tail N, 0 = 안 함)<input name="monitor.tail_lines" type="number" /></label>
+      <label class="check"><input type="checkbox" name="monitor.only_stream_errors" /> 에러 라인만 EC2 패널로 전송 (정상 로그 폭주 시 켜기)</label>
+    </section>
+
+    <section class="grp">
+      <h3>AI 에이전트 세션</h3>
+      <label>프로바이더
+        <select name="claude.provider">
+          <option value="claude">Claude (Anthropic)</option>
+          <option value="codex">Codex (OpenAI)</option>
+        </select>
+      </label>
+      <label>실행 명령 (공백 구분)<input name="claude.command" placeholder="claude" /></label>
+      <p class="hint">cwd는 위쪽 "프로젝트 → 로컬 소스 경로" 가 그대로 사용됩니다.</p>
+      <label class="check"><input type="checkbox" name="claude.auto_inject_on_match" /> 매칭 시 자동으로 입력창에 paste (꺼두면 히스토리에서 직접 재주입)</label>
+      <label class="check"><input type="checkbox" name="claude.auto_submit" /> 자동 paste 시 Enter 자동 (체크 해제 시 사용자가 직접 Enter)</label>
+      <label class="check"><input type="checkbox" name="claude.auto_apply" /> auto_apply (Phase 2 — 위험)</label>
+      <label class="check"><input type="checkbox" name="claude.install_deny_rules" /> Claude 권한 deny 규칙 자동 설치</label>
+      <label>Deny 패턴 (한 줄에 하나)<textarea name="claude.deny_patterns" rows="4"></textarea></label>
+    </section>
+
+    <section class="grp">
+      <h3>배포 (Phase 2)</h3>
+      <label class="check"><input type="checkbox" name="deploy.enabled" /> 활성화</label>
+      <label>빌드 명령<input name="deploy.build_cmd" /></label>
+      <label>빌드 cwd<span class="ifield"><input name="deploy.build_cwd" /><button type="button" class="pick" data-kind="dir">📁</button></span></label>
+      <label>아티팩트 경로<span class="ifield"><input name="deploy.artifact_path" /><button type="button" class="pick" data-kind="any">📁</button></span></label>
+      <label>SFTP 업로드 경로 (원격)<input name="deploy.sftp_target" /></label>
+      <label>원격 배포 명령<input name="deploy.remote_deploy_cmd" /></label>
+      <label>빌드 타임아웃(초)<input name="deploy.build_timeout_seconds" type="number" /></label>
+    </section>
+
+    <div class="window-foot">
+      <span id="settingsMsgFoot" class="msg"></span>
+      <button type="button" id="settingsCancel">닫기</button>
+      <button type="submit" id="settingsSave">저장 + 재시작</button>
+    </div>
+  </form>
+
+  <div id="pickerModal" class="modal hidden">
+    <div class="modal-card picker-card">
+      <div class="modal-head">
+        <span class="modal-title">경로 선택 — <span id="pickerKind"></span></span>
+        <button id="pickerClose" class="x">×</button>
+      </div>
+      <div class="picker-bar">
+        <button type="button" id="pickerUp">⬆ 상위</button>
+        <button type="button" id="pickerHome">🏠 home</button>
+        <input id="pickerPath" />
+        <label class="check" style="margin:0"><input type="checkbox" id="pickerHidden" /> 숨김</label>
+      </div>
+      <div id="pickerList" class="picker-list"></div>
+      <div class="modal-foot">
+        <span id="pickerSel" class="msg"></span>
+        <button type="button" id="pickerCancel">취소</button>
+        <button type="button" id="pickerSelect">선택</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="settings.js"></script>
+</body>
+</html>
