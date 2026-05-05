@@ -1,6 +1,6 @@
 [package]
 name = "system-monitor-desktop"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "Desktop monitor for EC2 docker logs with claude/codex PTY injection"
 authors = ["KiCAMo"]
@@ -14,7 +14,7 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 # --- Tauri core ---
-tauri = { version = "2", features = ["tray-icon"] }
+tauri = { version = "2", features = ["tray-icon", "devtools"] }
 tauri-plugin-updater = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-notification = "2"

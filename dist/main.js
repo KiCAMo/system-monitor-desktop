@@ -272,12 +272,31 @@ $("notifyBtn").addEventListener("click", async () => {
 });
 
 // ---------- Open / focus secondary windows ----------
+// Defensive: if the window from tauri.conf.json isn't reachable via
+// getAllWebviewWindows() (race during startup, or the tauri-cli version
+// initialised it differently), fall back to creating it on demand.
 async function showWindow(label) {
-  const wins = await getAllWebviewWindows();
-  const w = wins.find(x => x.label === label);
-  if (!w) return;
-  await w.show();
-  await w.setFocus();
+  try {
+    const { getAllWebviewWindows: getAll, WebviewWindow } =
+      window.__TAURI__.webviewWindow;
+    const wins = await getAll();
+    let w = wins.find((x) => x.label === label);
+    if (!w) {
+      const cfg = label === "settings"
+        ? { url: "settings.html", title: "설정",       width: 720, height: 800, minWidth: 600, minHeight: 500 }
+        : { url: "history.html",  title: "매칭 히스토리", width: 880, height: 700, minWidth: 600, minHeight: 400 };
+      w = new WebviewWindow(label, { ...cfg, resizable: true, decorations: true });
+      await new Promise((resolve, reject) => {
+        w.once("tauri://created", () => resolve());
+        w.once("tauri://error", (e) => reject(new Error(e?.payload || "create failed")));
+      });
+    }
+    await w.show();
+    await w.setFocus();
+  } catch (e) {
+    console.error("showWindow failed:", label, e);
+    alert(`'${label}' 윈도우 열기 실패: ${e?.message || e}`);
+  }
 }
 
 $("settingsBtn").addEventListener("click", () => showWindow("settings"));
