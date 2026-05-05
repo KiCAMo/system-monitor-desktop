@@ -1,0 +1,53 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "System Monitor",
+  "version": "0.1.0",
+  "identifier": "com.kicamo.system-monitor",
+  "build": {
+    "beforeDevCommand": "",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "System Monitor",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 900,
+        "minHeight": 600,
+        "resizable": true,
+        "fullscreen": false,
+        "decorations": true,
+        "transparent": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["dmg", "app"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns"
+    ],
+    "category": "DeveloperTool",
+    "shortDescription": "EC2 docker log monitor with claude/codex injection",
+    "longDescription": "Detects errors in remote docker container logs over SSH and pastes the captured context into a local claude or codex CLI session. Multi-node monitoring, profile switching, browse history, and re-inject from past matches."
+  },
+  "plugins": {
+    "updater": {
+      "active": true,
+      "endpoints": [
+        "https://github.com/KiCAMo/system-monitor-desktop/releases/latest/download/latest.json"
+      ],
+      "dialog": false,
+      "pubkey": "REPLACE_WITH_TAURI_SIGNER_PUBKEY"
+    }
+  }
+}

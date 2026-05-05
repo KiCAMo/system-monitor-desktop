@@ -1,0 +1,23 @@
+# Rust
+target/
+**/*.rs.bk
+
+# Tauri
+src-tauri/target/
+src-tauri/gen/
+
+# Node
+node_modules/
+
+# OS
+.DS_Store
+
+# App data (per-user, never commit)
+config.yaml
+profiles/
+history.db
+history.db-journal
+
+# Signing keys (NEVER commit)
+*.tauri-key
+*.tauri-key.pub
